@@ -32,7 +32,7 @@ from openai import OpenAI
 # ============================================================================
 
 # Your OpenAI API key — set it here OR as an environment variable
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "YOUR_KEY_HERE")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "API_KEY")
 
 # Model — GPT-4o-mini is cheap (~$0.15 per million input tokens), fast, and
 # accurate enough for classification tasks. We don't need GPT-4o for this.

@@ -1,0 +1,144 @@
+[
+  {
+    "id": "REQ-001",
+    "source": "Email",
+    "raw_message": "Hi, I tried logging in this morning and keep getting a 403 error. My account is arcvault.io/user/jsmith. This started after your update last Tuesday.",
+    "ingested_at": "2026-03-14T13:56:05.195850+00:00",
+    "category": "Bug Report",
+    "priority": "Medium",
+    "confidence_score": 0.9,
+    "core_issue": "User is experiencing a 403 error when trying to log in after a recent update.",
+    "identifiers": {
+      "account_id": "arcvault.io/user/jsmith",
+      "invoice_number": null,
+      "error_code": "403",
+      "url": null,
+      "product_area": null
+    },
+    "urgency_signal": "routine",
+    "mentioned_amounts": [],
+    "temporal_references": [
+      "this morning",
+      "last Tuesday"
+    ],
+    "routed_to": "Engineering",
+    "routing_note": "Matched category 'Bug Report' to queue",
+    "summary": "A customer is experiencing a 403 error when attempting to log in to their account (arcvault.io/user/jsmith) after a recent update. Please investigate the cause of this error and resolve the login issue for the user.",
+    "escalation_flag": false,
+    "escalation_reasons": [],
+    "processed_at": "2026-03-14T13:56:16.277577+00:00"
+  },
+  {
+    "id": "REQ-002",
+    "source": "Web Form",
+    "raw_message": "We'd love to see a bulk export feature for our audit logs. We're a compliance-heavy org and this would save us hours every month.",
+    "ingested_at": "2026-03-14T13:56:16.282573+00:00",
+    "category": "Feature Request",
+    "priority": "Low",
+    "confidence_score": 0.9,
+    "core_issue": "Customer requests a bulk export feature for audit logs to save time.",
+    "identifiers": {
+      "account_id": null,
+      "invoice_number": null,
+      "error_code": null,
+      "url": null,
+      "product_area": null
+    },
+    "urgency_signal": "routine",
+    "mentioned_amounts": [],
+    "temporal_references": [],
+    "routed_to": "Product",
+    "routing_note": "Matched category 'Feature Request' to queue",
+    "summary": "A customer has requested a bulk export feature for their audit logs to improve efficiency in their compliance processes. Please evaluate the feasibility of this feature and consider it for future development.",
+    "escalation_flag": false,
+    "escalation_reasons": [],
+    "processed_at": "2026-03-14T13:56:27.729299+00:00"
+  },
+  {
+    "id": "REQ-003",
+    "source": "Support Portal",
+    "raw_message": "Invoice #8821 shows a charge of $1,240 but our contract rate is $980/month. Can someone look into this?",
+    "ingested_at": "2026-03-14T13:56:27.729299+00:00",
+    "category": "Billing Issue",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "The customer is inquiring about a discrepancy in the invoice charge compared to the contract rate.",
+    "identifiers": {
+      "account_id": null,
+      "invoice_number": "8821",
+      "error_code": null,
+      "url": null,
+      "product_area": null
+    },
+    "urgency_signal": "immediate",
+    "mentioned_amounts": [
+      1240,
+      980
+    ],
+    "temporal_references": [],
+    "routed_to": "Human Review — Escalation",
+    "routing_note": "Escalated — Billing discrepancy of $260 exceeds $100 threshold",
+    "summary": "The customer has reported a billing discrepancy with Invoice #8821, indicating a charge of $1,240 instead of the contracted rate of $980/month. Please investigate this issue promptly to resolve the billing error.",
+    "escalation_flag": true,
+    "escalation_reasons": [
+      "Billing discrepancy of $260 exceeds $100 threshold"
+    ],
+    "processed_at": "2026-03-14T13:56:35.776052+00:00"
+  },
+  {
+    "id": "REQ-004",
+    "source": "Email",
+    "raw_message": "I'm not sure if this is the right place to ask, but is there a way to set up SSO with Okta? We're evaluating switching our auth provider.",
+    "ingested_at": "2026-03-14T13:56:35.779058+00:00",
+    "category": "Technical Question",
+    "priority": "Low",
+    "confidence_score": 0.85,
+    "core_issue": "Customer is inquiring about setting up SSO with Okta.",
+    "identifiers": {
+      "account_id": null,
+      "invoice_number": null,
+      "error_code": null,
+      "url": null,
+      "product_area": null
+    },
+    "urgency_signal": "routine",
+    "mentioned_amounts": [],
+    "temporal_references": [],
+    "routed_to": "IT/Security",
+    "routing_note": "Matched category 'Technical Question' to queue",
+    "summary": "A customer is inquiring about the possibility of setting up Single Sign-On (SSO) with Okta as they are considering switching their authentication provider. Please provide guidance on the SSO integration process with Okta.",
+    "escalation_flag": false,
+    "escalation_reasons": [],
+    "processed_at": "2026-03-14T13:56:42.161059+00:00"
+  },
+  {
+    "id": "REQ-005",
+    "source": "Web Form",
+    "raw_message": "Your dashboard stopped loading for us around 2pm EST. Checked our end — it's definitely on yours. Multiple users affected.",
+    "ingested_at": "2026-03-14T13:56:42.165069+00:00",
+    "category": "Incident/Outage",
+    "priority": "High",
+    "confidence_score": 0.95,
+    "core_issue": "The dashboard stopped loading for multiple users around 2pm EST.",
+    "identifiers": {
+      "account_id": null,
+      "invoice_number": null,
+      "error_code": null,
+      "url": null,
+      "product_area": null
+    },
+    "urgency_signal": "immediate",
+    "mentioned_amounts": [],
+    "temporal_references": [
+      "2pm EST"
+    ],
+    "routed_to": "Human Review — Escalation",
+    "routing_note": "Escalated — Escalation keyword detected: 'multiple users affected'",
+    "summary": "The customer reported that their dashboard stopped loading around 2pm EST, affecting multiple users. Please investigate the issue urgently to identify and resolve the outage.",
+    "escalation_flag": true,
+    "escalation_reasons": [
+      "Escalation keyword detected: 'multiple users affected'"
+    ],
+    "processed_at": "2026-03-14T13:56:48.334750+00:00"
+  }
+]
