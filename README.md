@@ -1,6 +1,6 @@
 # ArcVault AI Intake Pipeline — Submission
 
-**Candidate**: [Your Name]
+**Candidate**: [Ali Ghader]
 **Date**: March 2026
 **Time spent**: ~4 hours
 
