@@ -32,7 +32,7 @@ from openai import OpenAI
 # ============================================================================
 
 # Your OpenAI API key — set it here OR as an environment variable
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "API_KEY")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "YOUR_KEY_HERE")
 
 # Model — GPT-4o-mini is cheap (~$0.15 per million input tokens), fast, and
 # accurate enough for classification tasks. We don't need GPT-4o for this.
@@ -384,16 +384,17 @@ def step5_generate_summary(record: dict) -> dict:
 def step6_escalation_check(record: dict) -> dict:
     """
     STEP 6 — HUMAN ESCALATION FLAG
-    Check if this record needs human review. Three rules:
+    Check if this record needs human review. Two rules:
 
-    Rule 1: Confidence below 70%
-      → The model isn't sure, so a human should verify.
+    Note: Low confidence is already handled in Step 4 — those messages
+    go to General Support, NOT to escalation. Escalation is reserved
+    for genuinely urgent situations:
 
-    Rule 2: Escalation keywords detected
+    Rule 1: Escalation keywords detected
       → Words like "outage" or "multiple users affected" mean
         this could be a major incident regardless of confidence.
 
-    Rule 3: Billing discrepancy over $100
+    Rule 2: Billing discrepancy over $100
       → If two dollar amounts are mentioned and the difference
         is > $100, it's likely an overcharge complaint.
 
@@ -403,18 +404,12 @@ def step6_escalation_check(record: dict) -> dict:
     reasons = []
     message_lower = record["raw_message"].lower()
 
-    # Rule 1: Low confidence
-    if record.get("confidence_score", 1.0) < 0.70:
-        reasons.append(
-            f"Low confidence score: {record['confidence_score']}"
-        )
-
-    # Rule 2: Escalation keywords
+    # Rule 1: Escalation keywords
     for keyword in ESCALATION_KEYWORDS:
         if keyword.lower() in message_lower:
             reasons.append(f"Escalation keyword detected: '{keyword}'")
 
-    # Rule 3: Billing discrepancy
+    # Rule 2: Billing discrepancy
     amounts = record.get("mentioned_amounts", [])
     if len(amounts) >= 2:
         discrepancy = abs(max(amounts) - min(amounts))

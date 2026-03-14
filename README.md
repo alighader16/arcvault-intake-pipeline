@@ -1,6 +1,6 @@
 # ArcVault AI Intake Pipeline — Submission
 
-**Candidate**: [Ali Ghader]
+**Candidate**: [Your Name]
 **Date**: March 2026
 **Time spent**: ~4 hours
 
@@ -74,4 +74,4 @@ ArcVault/
 3. **Enrichment** — LLM extracts core issue, identifiers, urgency signal, amounts, dates
 4. **Routing** — Maps category to queue (5 queues + fallback for low confidence)
 5. **Summary** — LLM generates 2-3 sentence actionable summary for receiving team
-6. **Escalation** — Flags for human review if: confidence < 70%, escalation keywords detected, or billing discrepancy > $100
+6. **Escalation** — Flags for human review if: escalation keywords detected (e.g., "outage", "multiple users affected") or billing discrepancy > $100. Note: low confidence is handled separately in Step 4 (routed to General Support, not escalation)

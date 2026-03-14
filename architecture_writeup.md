@@ -45,11 +45,18 @@ Routing maps the LLM-assigned category to a destination queue using a static loo
 
 A record is flagged for human review and rerouted to "Human Review — Escalation" if any of these criteria are met:
 
-1. **Confidence below 70%**: The model isn't sure enough for automated routing. This threshold was chosen because in informal testing, classifications below 0.7 were wrong roughly half the time. With a production dataset, I would tune this with precision/recall curves.
+I deliberately separated low-confidence handling from escalation. These are two different problems:
 
-2. **Keyword match**: The message contains terms like "outage," "down for all users," or "multiple users affected." These indicate high-impact incidents that should always get human eyes regardless of classification confidence. The keyword list is deliberately conservative — false positives (unnecessary escalation) are preferable to false negatives (missed outages).
+- **Low confidence** means the AI isn't sure what the message is. The right response is to send it to **General Support** — a human triages it manually. This happens in Step 4 (Routing), not Step 6.
+- **Escalation** means the message is genuinely urgent or sensitive, regardless of how confident the AI is. The right response is to flag it for **Human Review** with priority attention.
 
-3. **Billing discrepancy over $100**: If two or more dollar amounts are extracted and the difference exceeds $100, the record escalates. This catches overcharge complaints that could have financial or legal implications. The $100 threshold is low intentionally — billing errors erode trust quickly, and it's better to over-escalate.
+Mixing these two into the same queue would flood the escalation team with messages that are just ambiguous, diluting their attention from truly urgent issues.
+
+The two escalation rules are:
+
+1. **Keyword match**: The message contains terms like "outage," "down for all users," or "multiple users affected." These indicate high-impact incidents that should always get human eyes regardless of classification confidence. The keyword list is deliberately conservative — false positives (unnecessary escalation) are preferable to false negatives (missed outages).
+
+2. **Billing discrepancy over $100**: If two or more dollar amounts are extracted and the difference exceeds $100, the record escalates. This catches overcharge complaints that could have financial or legal implications. The $100 threshold is low intentionally — billing errors erode trust quickly, and it's better to over-escalate.
 
 When escalation fires, it **overrides** the standard routing destination. A record that would have gone to Engineering goes to Human Review instead. The escalation reasons are preserved in the output so the reviewer knows why it was flagged.
 
