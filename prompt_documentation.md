@@ -1,8 +1,8 @@
 # Prompt Documentation — ArcVault Intake Pipeline
 
-## Overview
+## My Process
 
-The pipeline uses three LLM calls per request. Each prompt is designed to do one thing well, keeping outputs focused and parseable. All prompts enforce JSON-only output to avoid parsing failures from conversational preamble.
+I wrote the initial prompts myself based on what I thought the model needed to know, then used GPT to help me refine the wording and tighten the output formatting. The core logic and rules are mine — the AI helped me clean up the structure so the model would return consistent JSON every time. Below are the final versions with my reasoning.
 
 ---
 
@@ -30,14 +30,16 @@ Rules for category:
 - Technical Question: a question about how to configure or use a feature
 - Incident/Outage: a service-wide or multi-user disruption
 
-Return ONLY valid JSON. No explanation, no markdown fences.
+Return ONLY valid JSON. No explanation, no markdown fences, no extra text.
 ```
 
-### Design Rationale
+### Why I Wrote It This Way
 
-I structured this prompt with explicit enum constraints for both category and priority to eliminate ambiguity — the model can only pick from the defined set, which makes downstream routing deterministic. The priority rules are ordered by severity (High first) so the model encounters the most important criteria before lower ones, reducing the chance it defaults to "Medium" for everything.
+The first version of this prompt was much simpler — I just said "classify this message into a category and priority." The problem was the model kept inventing its own categories (like "Account Issue" or "Urgent Bug") and the priority was inconsistent. So I locked it down with exact lists it has to pick from.
 
-I included brief distinguishing definitions for each category because several overlap in practice. For example, a 403 error could be classified as a "Bug Report" or a "Technical Question" depending on framing — the "was working and is now broken" criterion for Bug Report resolves that ambiguity. The confidence score is self-reported by the model, which is imperfect but serves as a useful routing signal — messages with confidence below 70% are routed to General Support for human triage rather than risking a misroute to the wrong specialist team. With more time, I would calibrate confidence by running the classifier against a labeled test set and adjusting the 0.7 threshold based on observed precision/recall.
+The category definitions were the part I spent the most time on. A 403 login error could easily be a "Bug Report" or a "Technical Question" depending on how you look at it. I added "was working and is now broken" to Bug Report specifically to handle that edge case — if it was working before, it's a bug, not a question.
+
+The confidence score is self-reported by the model, which isn't ideal — the model tends to be overconfident. But it still gives us a useful signal: anything below 0.7 is different enough from the rest that it's worth sending to a human for triage. If I had more time, I'd run this against a labeled test set and see where the model actually starts getting things wrong, then calibrate the threshold properly.
 
 ---
 
@@ -56,14 +58,18 @@ Return a JSON object with exactly these fields:
 - "mentioned_amounts": any dollar amounts mentioned (as a list of numbers), or empty list
 - "temporal_references": any time/date references mentioned (as a list of strings), or empty list
 
-Return ONLY valid JSON. No explanation, no markdown fences.
+Return ONLY valid JSON. No explanation, no markdown fences, no extra text.
 ```
 
-### Design Rationale
+### Why I Wrote It This Way
 
-This prompt receives the classification output as context so the model can use the category to guide extraction — for example, knowing something is a "Billing Issue" cues the model to look harder for invoice numbers and dollar amounts. I separated enrichment from classification into its own LLM call because combining them into a single mega-prompt degraded accuracy in testing: the model would rush through extraction to get to the classification, or vice versa.
+I originally tried to do classification and enrichment in one prompt. It didn't work well — the model would get lazy about entity extraction when it was also trying to classify, or it would focus so much on pulling out details that the category would come back wrong. Splitting them into two calls fixed that immediately.
 
-The "identifiers" field uses a flexible object rather than a fixed schema because the set of relevant IDs varies wildly by message type (error codes for bugs, invoice numbers for billing, product areas for feature requests). Null values for absent fields keep the schema consistent without hallucinating data. The "mentioned_amounts" field exists specifically to feed the billing discrepancy escalation rule — extracting raw numbers lets the routing logic do math without parsing sentences. With more time, I would add a second-pass validation step that checks extracted entities against known patterns (e.g., invoice numbers matching a regex).
+I feed the classification result into this prompt as context ("this is a Billing Issue") because it helps the model know what to look for. When it knows it's dealing with a billing issue, it pays more attention to dollar amounts and invoice numbers instead of looking for error codes.
+
+The "mentioned_amounts" field exists for a very specific reason — the escalation rule needs raw numbers to calculate billing discrepancies. If I just had the model write "there's a $260 difference," my code can't do math on a sentence. By extracting amounts as a list of numbers, the code can do `max - min` and check if it's over $100.
+
+The "identifiers" field is intentionally flexible (not a fixed schema) because different message types have completely different identifiers. A bug report has error codes, a billing issue has invoice numbers, a technical question might reference a third-party tool like Okta. Trying to force all of these into one rigid structure would either miss things or make the model hallucinate fields that don't exist.
 
 ---
 
@@ -78,25 +84,29 @@ The summary should be actionable — tell the receiving team what happened and w
 Classification: {category} | Priority: {priority}
 Routing to: {queue}
 
-Customer message: ...
+Customer message: [message here]
 
-Extracted entities: ...
+Extracted entities: [entities here]
 
 Write only the summary, nothing else. No JSON, no labels — just 2-3 plain sentences.
 ```
 
-### Design Rationale
+### Why I Wrote It This Way
 
-This is the only prompt that produces free text rather than JSON. I made it the final LLM call because it can incorporate all upstream data (classification, routing destination, extracted entities) to produce a context-rich summary. The instruction "tell the receiving team what happened and what they need to do" is deliberate — it forces the model to produce actionable output rather than a passive restatement of the message.
+This is the only prompt that returns plain text instead of JSON. I put it last in the pipeline because by this point we already have all the context — category, priority, routing destination, extracted entities — so the summary can be rich and specific.
 
-I include the routing destination in the prompt context so the summary can address the correct team ("Engineering should investigate..." vs. "Billing should verify..."). The 2-3 sentence constraint prevents the model from over-explaining. With more time, I would template these summaries per queue — Engineering summaries would emphasize reproduction steps and error codes, while Billing summaries would emphasize amounts and contract references.
+The key word in this prompt is "actionable." My first version produced summaries like "The customer has a billing concern regarding invoice #8821." That's useless — it just restates the problem without telling anyone what to do. When I added "tell the receiving team what they need to do," the output changed to things like "Billing should verify the contract terms and issue a correction." That's something someone can actually act on without reading the original message.
+
+I also pass the routing destination into the prompt so the summary addresses the right team. If it's going to Engineering, the summary talks about investigating the issue. If it's going to Billing, it talks about verifying contracts and issuing credits. The summary feels tailored because it is.
+
+With more time, I'd create different summary templates per team — Engineering summaries would emphasize reproduction steps and error codes, Billing summaries would focus on amounts and contract references, Product summaries would highlight user impact and business value.
 
 ---
 
-## General Prompt Design Decisions
+## General Notes
 
-**Temperature 0.1**: I use very low temperature across all calls. Classification and extraction need determinism — running the same input twice should produce the same output. A slight non-zero value avoids degenerate repetition patterns that sometimes occur at temperature 0.
+**Temperature 0.1**: I use low temperature because I need consistency. Running the same message twice should give the same classification. I didn't go all the way to 0 because that sometimes causes weird repetition issues, so 0.1 is the sweet spot.
 
-**Separate calls vs. single call**: I chose three separate LLM calls instead of one combined prompt. This costs more in latency (~3x) but produces significantly better results because each call has a focused task. In production, I would parallelize the enrichment and classification calls since they don't depend on each other, then run the summary call last.
+**Three calls vs one**: Yes it's slower and costs more per message. But each call does one job well instead of one call doing three jobs badly. In production I'd run classification and enrichment in parallel since they don't actually depend on each other — that would cut total time by about a third.
 
-**Model choice (GPT-4o-mini)**: Fast, cheap (~$0.15/M input tokens), and accurate for structured output tasks. It handles JSON formatting reliably without needing function calling or structured output mode. For production, I would benchmark against Claude Haiku and Llama 3.3 70B (via Groq) on a labeled dataset to find the best cost/accuracy tradeoff.
+**Model choice (GPT-4o-mini)**: Best balance of cost, speed, and accuracy for structured tasks. About $0.15 per million input tokens, responds in under a second, and handles JSON formatting without issues. GPT-4o would work too but it's overkill — like using a sports car to get groceries.
