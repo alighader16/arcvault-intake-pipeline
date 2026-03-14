@@ -1,0 +1,15 @@
+# Secrets — NEVER push these
+.env
+
+# Python junk
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/

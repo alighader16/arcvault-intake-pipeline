@@ -1,0 +1,2 @@
+# This folder is monitored in --watch mode.
+# Drop .txt files here to trigger the pipeline automatically.
